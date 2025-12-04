@@ -1,11 +1,13 @@
 import express from "express";
 import fetch from "node-fetch";
 import { GoogleAuth } from "google-auth-library";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const serviceAccount = require("./service-account.json"); // ✅ JSON import fixed
+
 const app = express();
 app.use(express.json());
-
-// Load service account key
-import serviceAccount from "./service-account.json" assert { type: "json" };
 
 const auth = new GoogleAuth({
   credentials: serviceAccount,
@@ -57,10 +59,12 @@ app.post("/send-multiple", async (req, res) => {
 
   const results = [];
   for (let token of tokens) {
-    results.push(await sendFCMMessage({
-      token,
-      notification: { title, body },
-    }));
+    results.push(
+      await sendFCMMessage({
+        token,
+        notification: { title, body },
+      }),
+    );
   }
 
   res.send(results);
@@ -72,15 +76,19 @@ app.post("/send-group", async (req, res) => {
 
   const results = [];
   for (let token of groupTokens) {
-    results.push(await sendFCMMessage({
-      token,
-      notification: { title, body },
-    }));
+    results.push(
+      await sendFCMMessage({
+        token,
+        notification: { title, body },
+      }),
+    );
   }
 
   res.send(results);
 });
 
-app.listen(3000, () =>
-  console.log("🚀 FCM HTTP v1 Notification Server Running"),
+// ✅ IMPORTANT for Render: use dynamic PORT
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () =>
+  console.log(`🚀 FCM HTTP v1 Notification Server Running on port ${PORT}`),
 );
